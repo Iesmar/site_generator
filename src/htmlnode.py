@@ -106,7 +106,57 @@ def extract_markdown_links(text):
     return text_n_url
 
 def split_nodes_image(list_of_nodes):
-    pass
+    processed_nodes = []
+    for node in list_of_nodes:
+        ### node == TextNode("This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) and another ![second image](https://i.imgur.com/3elNhQu.png)", TextType.TEXT,)
+        if node.text_type != TextType.TEXT:
+            processed_nodes.append(node)
+        else:
+            main_text = node.text
+            text_img = extract_markdown_images(node.text) ### list of tuples with "text of img", img_link --> [("image", "https://i.imug.....")]
+            for tuple in (text_img):
+                text_of_img = tuple[0]
+                img_link = tuple[1]
+                split_text = main_text.split(f"![{text_of_img}]({img_link})", 1)
+                plain_text = split_text[0]
+                if plain_text != "":
+                    processed_nodes.append(TextNode(plain_text, TextType.TEXT))         #Append text!
+                    main_text = main_text.replace(plain_text, "")                       #REMOVE Text from string
+                processed_nodes.append(TextNode(text_of_img, TextType.IMAGE, img_link)) #append IMG block
+                main_text = main_text.replace(f"![{text_of_img}]({img_link})", "")      #REMOVE IMG form string
+            if main_text != "":
+                processed_nodes.append(TextNode(main_text, TextType.TEXT)) 
+    return processed_nodes
+    
+def split_nodes_link(list_of_nodes):
+    processed_nodes = []
+    for node in list_of_nodes:
+        if node.text_type != TextType.TEXT:
+            processed_nodes.append(node)
+        else:
+            main_text = node.text
+            text_link = extract_markdown_links(node.text)
 
-def split_nodes_link(old_nodes):
-    pass
+            for tuple in(text_link):
+                text_of_link = tuple[0]
+                link = tuple[1]
+                split_text = main_text.split(f"[{text_of_link}]({link})", 1)
+                plain_text = split_text[0]
+                if plain_text != "":
+                    processed_nodes.append(TextNode(plain_text, TextType.TEXT))
+                    main_text = main_text.replace(plain_text, "")
+                processed_nodes.append(TextNode(text_of_link, TextType.LINK, link))
+                main_text = main_text.replace(f"[{text_of_link}]({link})", "")
+            if main_text != "":
+                processed_nodes.append(TextNode(main_text, TextType.TEXT))
+    return processed_nodes
+
+def text_to_textnodes(text):
+    nodes = [TextNode(text, TextType.TEXT)]
+    nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+    nodes = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
+    nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
+    nodes = split_nodes_image(nodes)
+    nodes = split_nodes_link(nodes)
+
+    return nodes

@@ -1,6 +1,6 @@
 import unittest
 
-from htmlnode import HTMLNode, LeafNode, ParentNode, text_node_to_html_node, split_nodes_delimiter, extract_markdown_images, extract_markdown_links
+from htmlnode import HTMLNode, LeafNode, ParentNode, text_node_to_html_node, split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes
 from textnode import TextNode, TextType
 
 class TestHTMLNode(unittest.TestCase):
@@ -335,6 +335,211 @@ class TestTextToURLandIMG(unittest.TestCase):
     def test_extract_markdown_img_with_url(self):
         match = extract_markdown_images("this is textand[this link](https://www.google.com) some image![image](https://i.imgur.com/zjjcJKZ.png)")
         self.assertListEqual([("image", "https://i.imgur.com/zjjcJKZ.png")], match)    
+
+class TestSplitNodesToIMG(unittest.TestCase):
+    def test_split_images(self):
+        node = TextNode(
+            "This is text with an111 ![image](https://i.imgur.com/zjjcJKZ.png) and another ![second image](https://i.imgur.com/3elNhQu.png)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_image([node])
+        self.assertListEqual(
+            [
+                TextNode("This is text with an111 ", TextType.TEXT),
+                TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode(" and another ", TextType.TEXT),
+                TextNode(
+                    "second image", TextType.IMAGE, "https://i.imgur.com/3elNhQu.png"
+                ),
+            ],
+            new_nodes,
+        )
+
+class TestSplitNodesToIMG(unittest.TestCase):
+    def test_split_images(self):
+        node = TextNode(
+            "This is text with an111 ![image](https://i.imgur.com/zjjcJKZ.png) and another ![second image](https://i.imgur.com/3elNhQu.png) plus some trailing text",
+            TextType.TEXT,
+        )
+
+        new_nodes = split_nodes_image([node])
+
+        self.assertListEqual(
+            [
+                TextNode("This is text with an111 ", TextType.TEXT),
+                TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode(" and another ", TextType.TEXT),
+                TextNode(
+                    "second image",
+                    TextType.IMAGE,
+                    "https://i.imgur.com/3elNhQu.png",
+                ),
+                TextNode(" plus some trailing text", TextType.TEXT),
+            ],
+            new_nodes,
+        )
+    
+    def test_split_images_only_image(self):
+        node = TextNode(
+            "![Boot.dev logo](https://blog.boot.dev/img/logo.png)",
+            TextType.TEXT,
+        )
+
+        new_nodes = split_nodes_image([node])
+
+        self.assertListEqual(
+            [
+                TextNode(
+                    "Boot.dev logo",
+                    TextType.IMAGE,
+                    "https://blog.boot.dev/img/logo.png",
+                ),
+            ],
+            new_nodes,
+        )
+
+class TestSplitNodesToLINKS(unittest.TestCase):
+
+    def test_split_links_basic(self):
+        node = TextNode(
+            "This is text with a [link](https://www.google.com)",
+            TextType.TEXT,
+        )
+
+        new_nodes = split_nodes_link([node])
+
+        self.assertListEqual(
+            [
+                TextNode("This is text with a ", TextType.TEXT),
+                TextNode("link", TextType.LINK, "https://www.google.com"),
+            ],
+            new_nodes,
+        )
+    
+    def test_split_links_multiple(self):
+        node = TextNode(
+            "Here is a [first](https://first.com) and a [second](https://second.com)",
+            TextType.TEXT,
+        )
+
+        new_nodes = split_nodes_link([node])
+
+        self.assertListEqual(
+            [
+                TextNode("Here is a ", TextType.TEXT),
+                TextNode("first", TextType.LINK, "https://first.com"),
+                TextNode(" and a ", TextType.TEXT),
+                TextNode("second", TextType.LINK, "https://second.com"),
+            ],
+            new_nodes,
+        )
+    
+    def test_split_links_with_trailing_text(self):
+        node = TextNode(
+            "Visit [OpenAI](https://openai.com) for more info please",
+            TextType.TEXT,
+        )
+
+        new_nodes = split_nodes_link([node])
+
+        self.assertListEqual(
+            [
+                TextNode("Visit ", TextType.TEXT),
+                TextNode("OpenAI", TextType.LINK, "https://openai.com"),
+                TextNode(" for more info please", TextType.TEXT),
+            ],
+            new_nodes,
+        )
+    
+    def test_split_links_only_link(self):
+        node = TextNode(
+            "[Boot.dev](https://boot.dev)",
+            TextType.TEXT,
+        )
+
+        new_nodes = split_nodes_link([node])
+
+        self.assertListEqual(
+            [
+                TextNode("Boot.dev", TextType.LINK, "https://boot.dev"),
+            ],
+            new_nodes,
+        )
+
+class TestTextToTextNodes(unittest.TestCase):
+    
+    def test_text_to_textnodes_multi_single_elements(self):
+        node = "This is **text** with an _italic_ word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+        test_node = text_to_textnodes(node)
+
+        self.assertListEqual(
+            [
+                TextNode("This is ", TextType.TEXT),
+                TextNode("text", TextType.BOLD),
+                TextNode(" with an ", TextType.TEXT),
+                TextNode("italic", TextType.ITALIC),
+                TextNode(" word and a ", TextType.TEXT),
+                TextNode("code block", TextType.CODE),
+                TextNode(" and an ", TextType.TEXT),
+                TextNode("obi wan image", TextType.IMAGE, "https://i.imgur.com/fJRm4Vk.jpeg"),
+                TextNode(" and a ", TextType.TEXT),
+                TextNode("link", TextType.LINK, "https://boot.dev"),
+            ],
+            test_node
+        )
+    
+    def test_text_to_textnodes_plain_text(self):
+        text = "just plain text"
+        actual = text_to_textnodes(text)
+        self.assertListEqual(
+            [TextNode("just plain text", TextType.TEXT)],
+            actual,
+        )
+    
+    def test_text_to_textnodes_starts_with_link(self):
+        text = "[boot.dev](https://boot.dev) is useful"
+        actual = text_to_textnodes(text)
+        self.assertListEqual(
+            [
+                TextNode("boot.dev", TextType.LINK, "https://boot.dev"),
+                TextNode(" is useful", TextType.TEXT),
+            ],
+            actual,
+        )
+
+    def test_text_to_textnodes_multiple_links_images_and_bold(self):
+        node = (
+            "This is **bold1** text with a [first link](https://first.com), "
+            "then **bold2** and an ![first image](https://img1.com/image1.png), "
+            "followed by a [second link](https://second.com), "
+            "then **bold3** and another ![second image](https://img2.com/image2.png) "
+            "plus a final [third link](https://third.com)."
+        )
+
+        test_node = text_to_textnodes(node)
+
+        self.assertListEqual(
+            [
+                TextNode("This is ", TextType.TEXT),
+                TextNode("bold1", TextType.BOLD),
+                TextNode(" text with a ", TextType.TEXT),
+                TextNode("first link", TextType.LINK, "https://first.com"),
+                TextNode(", then ", TextType.TEXT),
+                TextNode("bold2", TextType.BOLD),
+                TextNode(" and an ", TextType.TEXT),
+                TextNode("first image", TextType.IMAGE, "https://img1.com/image1.png"),
+                TextNode(", followed by a ", TextType.TEXT),
+                TextNode("second link", TextType.LINK, "https://second.com"),
+                TextNode(", then ", TextType.TEXT),
+                TextNode("bold3", TextType.BOLD),
+                TextNode(" and another ", TextType.TEXT),
+                TextNode("second image", TextType.IMAGE, "https://img2.com/image2.png"),
+                TextNode(" plus a final ", TextType.TEXT),
+                TextNode("third link", TextType.LINK, "https://third.com"),
+                TextNode(".", TextType.TEXT),
+            ],
+            test_node,
+        )
 
     
 
