@@ -12,16 +12,19 @@ def main():
         basepath = "/"
 
     # first check if path exist - yes->Delete - No->Create
-    if os.path.exists("./public"):
-        print("cleaned up old files!")
-        shutil.rmtree("./public")
-    if not os.path.exists("./public"):
-        print("created new empty work folder (./public).")
-        os.mkdir("./public")
+    
     path = ""
     root_content_path = "./content/"
     root_template = "./template.html"
-    root_public = "./public/"
+    root_public = "./docs/"
+
+    if os.path.exists(root_public):
+        print("cleaned up old files!")
+        shutil.rmtree(root_public)
+    if not os.path.exists(root_public):
+        print(f"created new empty work folder {root_public}")
+        os.mkdir(root_public)
+
     generate_website(root_content_path, root_template, root_public, basepath)
     copy_files(path)
 
