@@ -86,17 +86,15 @@ def copy_files(path, root_static, root_public):
                 print("empty folder")
                 break
             if os.path.isfile(f"{root_static}{path}{item}"):
-                copy_this_to(item, path)    
+                shutil.copy(f"{root_static}{path}{item}", f"{root_public}{path}")
+                print(f"{root_static}{path}{item} successfully coppied to {root_public}{path}")
             if os.path.isfile(f"{root_static}{path}{item}") == False:
                 path += f"{item}/"
                 os.mkdir(f"{root_public}{path}")
                 print(f"created dir {root_public}{path}")
                 print(f"moving into dir {root_static}{path}")
                 copy_files(path, root_static, root_public)
-                
-def copy_this_to(file, path):
-    shutil.copy(f"./static/{path}{file}", f"./public/{path}")
-    print(f"{file} successfully coppied to ./public/{path}")
+    
 
 
 if __name__ == "__main__":
