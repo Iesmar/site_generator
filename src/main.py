@@ -1,6 +1,8 @@
 import os, shutil
 
+from htmlblocks import markdown_to_html_node, extract_title
 from textnode import TextNode
+
 
 def main():
     # first check if path exist - yes->Delete - No->Create
@@ -11,7 +13,63 @@ def main():
         print("created new empty work folder (./public).")
         os.mkdir("./public")
     path = ""
+    root_content_path = "./content/"
+    root_template = "./template.html"
+    root_public = "./public/"
+    generate_website(root_content_path, root_template, root_public)
     copy_files(path)
+
+    #generate_page("./content/index.md","./template.html","./public/index.html")
+
+    
+def generate_website(content_root, template_root, dest_root):
+
+    print(f"I AM IN THE FOLLOWING {content_root}")
+    files_to_convert = os.listdir(f"{content_root}")
+    print("\n\nThese files need to be converted/coppied!")
+    print(files_to_convert)
+    for item in files_to_convert:
+            new_content_root = f"{content_root}{item}" #
+            new_dest_root = f"{dest_root}{item}/"
+            #if files_to_convert == []:
+                #print("empty folder!!!!!")
+                #break
+            if os.path.isfile(f"{new_content_root}"):
+                generate_page(f"{new_content_root}", template_root, f"{str(new_dest_root[:-4])}.html")
+                print(f"converted {new_content_root} into {str(new_dest_root[:-4])}.html")    
+            elif os.path.isfile(f"{new_content_root}") == False:
+                #content_root += f"{item}/"
+                #dest_root += f"{item}/"
+                os.makedirs(f"{new_dest_root}", exist_ok=True)
+                #print(f"created dir {dest_root}") 
+                #print(f"moving into dir {content_root}")
+                generate_website(f"{new_content_root}/", template_root, new_dest_root)
+
+
+
+def generate_page(from_path, template_path, dest_path):
+    print(f"\nGenerating page from {from_path}\nto {dest_path} using {template_path}\n")
+    
+    with open(from_path) as f:
+        markdown = f.read()
+    with open(template_path) as f:
+        template = f.read()
+    
+    html_nodes = markdown_to_html_node(markdown)
+    html_page = html_nodes.to_html()
+
+    title = extract_title(markdown)
+
+    template = template.replace("{{ Title }}", title)
+    final_page = template.replace("{{ Content }}", html_page)
+
+    with open(f"{dest_path}", "w") as f:
+        f.write(final_page)
+
+
+
+
+
 
 
 def copy_files(path):
@@ -31,7 +89,6 @@ def copy_files(path):
                 print(f"moving into dir ./static/{path}")
                 copy_files(path)
                 
-
 def copy_this_to(file, path):
     shutil.copy(f"./static/{path}{file}", f"./public/{path}")
     print(f"{file} successfully coppied to ./public/{path}")

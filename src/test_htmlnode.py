@@ -2,7 +2,7 @@ import unittest
 
 from htmlnode import HTMLNode, LeafNode, ParentNode, text_node_to_html_node, split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes
 from textnode import TextNode, TextType
-from htmlblocks import BlockType, markdown_to_blocks, block_to_block_type, markdown_to_html_node
+from htmlblocks import BlockType, markdown_to_blocks, block_to_block_type, markdown_to_html_node, extract_title
 
 class TestHTMLNode(unittest.TestCase):
     def test_empty(self):
@@ -743,13 +743,7 @@ class TestMarkdownToHtmlNodeLists(unittest.TestCase):
         node = markdown_to_html_node(markdown)
 
         expected_html = (
-            "<div>"
-            "<ul>"
-            "<li>First item</li>"
-            "<li>Second item</li>"
-            "<li>Third item</li>"
-            "</ul>"
-            "</div>"
+            "<div><ul><li>First item</li><li>Second item</li><li>Third item</li></ul></div>"
         )
 
         self.assertEqual(node.to_html(), expected_html)
@@ -763,13 +757,7 @@ class TestMarkdownToHtmlNodeLists(unittest.TestCase):
         node = markdown_to_html_node(markdown)
 
         expected_html = (
-            "<div>"
-            "<ul>"
-            "<li>This is <b>bold</b></li>"
-            "<li>This is <i>italic</i></li>"
-            "<li>This is <b>bold</b> and <i>italic</i></li>"
-            "</ul>"
-            "</div>"
+            "<div><ul><li>This is <b>bold</b></li><li>This is <i>italic</i></li><li>This is <b>bold</b> and <i>italic</i></li></ul></div>"
         )
 
         self.assertEqual(node.to_html(), expected_html)
@@ -783,13 +771,7 @@ class TestMarkdownToHtmlNodeLists(unittest.TestCase):
         node = markdown_to_html_node(markdown)
 
         expected_html = (
-            "<div>"
-            "<ol>"
-            "<li>First item</li>"
-            "<li>Second item</li>"
-            "<li>Third item</li>"
-            "</ol>"
-            "</div>"
+            "<div><ol><li>First item</li><li>Second item</li><li>Third item</li></ol></div>"
         )
 
         self.assertEqual(node.to_html(), expected_html)
@@ -803,16 +785,44 @@ class TestMarkdownToHtmlNodeLists(unittest.TestCase):
         node = markdown_to_html_node(markdown)
 
         expected_html = (
-            "<div>"
-            "<ol>"
-            "<li>This is <b>bold</b></li>"
-            "<li>This is <i>italic</i></li>"
-            "<li>This is <b>bold</b> and <i>italic</i></li>"
-            "</ol>"
-            "</div>"
+            "<div><ol><li>This is <b>bold</b></li><li>This is <i>italic</i></li><li>This is <b>bold</b> and <i>italic</i></li></ol></div>"
         )
 
         self.assertEqual(node.to_html(), expected_html)
+
+class ExtractTitleFromMarkdown(unittest.TestCase):
+    def test_unordered_list_plain_text(self):
+        markdown = """
+This is some radnom text
+
+# This is A heading lvl 1
+
+- Second item
+- Third item
+"""
+        node = extract_title(markdown)
+
+        expectedresult = ("This is A heading lvl 1")
+        self.assertEqual(node,expectedresult)
+
+    def test_unordered_list_plain_text(self):
+        markdown = """
+This is some radnom text
+
+## This is A heading lvl 2
+"""
+        with self.assertRaises(Exception):
+            extract_title(markdown)
+    
+    def test_unordered_list_plain_text(self):
+        markdown = """
+This is some radnom text
+
+This has nothing
+"""
+        with self.assertRaises(Exception):
+            extract_title(markdown)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -166,3 +166,14 @@ def text_to_children(text):
     for node in text_nodes:
         children.append(text_node_to_html_node(node))
     return children
+
+def extract_title(markdown):
+    blocks_in_markdown = markdown_to_blocks(markdown)
+
+    for block in blocks_in_markdown:
+        block_type = block_to_block_type(block)
+        if block_type == BlockType.HEADING: 
+            
+            if block[:2] == "# ":
+                return block[2:]
+    raise Exception("No header found")

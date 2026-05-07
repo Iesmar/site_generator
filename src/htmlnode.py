@@ -31,19 +31,27 @@ class HTMLNode():
 class LeafNode(HTMLNode):
     def __init__(self, tag, value, props=None):
         super().__init__(tag, value, children=None, props=props)
-    
-    def to_html(self): ### just two cases of how to deal with a tag and a props input, this is just a setup.
-        if self.value is None:
-            raise ValueError ("No value set! LeafNode")
-        elif self.tag is None:
+    def to_html(self):
+        # Case 1: Plain text node (no tag)
+        if self.tag is None:
+            if self.value is None:
+                raise ValueError("No value set! LeafNode")
             return str(self.value)
-        elif self.props:
-            return f"<a{self.props_to_html()}>{self.value}</a>"
-        else:
-            return f"<{self.tag}>{self.value}</{self.tag}>"
-            
-    def __repr__(self): ### Make sure we can see thing for troubleshooting!!!
-        return f"LeafNode({self.tag}, {self.value}, {self.props})"
+
+        # Case 2: Image node (special self-closing style for this project)
+        if self.tag == "img":
+            return f"<img{self.props_to_html()}>"
+
+        # Case 3: All other tagged nodes need a value
+        if self.value is None:
+            raise ValueError("No value set! LeafNode")
+
+        # Case 4: Tagged node with props
+        if self.props:
+            return f"<{self.tag}{self.props_to_html()}>{self.value}</{self.tag}>"
+
+        # Case 5: Standard tagged node
+        return f"<{self.tag}>{self.value}</{self.tag}>"
 
 class ParentNode(HTMLNode):
     def __init__(self, tag, children, props=None):
