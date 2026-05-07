@@ -17,6 +17,7 @@ def main():
     root_content_path = "./content/"
     root_template = "./template.html"
     root_public = "./docs/"
+    root_static = "./static/"
 
     if os.path.exists(root_public):
         print("cleaned up old files!")
@@ -26,7 +27,7 @@ def main():
         os.mkdir(root_public)
 
     generate_website(root_content_path, root_template, root_public, basepath)
-    copy_files(path)
+    copy_files(path, root_static, root_public)
 
     #generate_page("./content/index.md","./template.html","./public/index.html")
 
@@ -54,8 +55,6 @@ def generate_website(content_root, template_root, dest_root, basepath):
                 #print(f"moving into dir {content_root}")
                 generate_website(f"{new_content_root}/", template_root, new_dest_root, basepath)
 
-
-
 def generate_page(from_path, template_path, dest_path, basepath):
     print(f"\nGenerating page from {from_path}\nto {dest_path} using {template_path}\n")
     
@@ -78,22 +77,22 @@ def generate_page(from_path, template_path, dest_path, basepath):
     with open(f"{dest_path}", "w") as f:
         f.write(final_page)
 
-def copy_files(path):
-        files_to_copy = os.listdir(f"./static/{path}")
+def copy_files(path, root_static, root_public):
+        files_to_copy = os.listdir(f"{root_static}{path}")
         print("\nThese files need to be coppied!")
         print(files_to_copy)
         for item in files_to_copy:
             if files_to_copy == []:
                 print("empty folder")
                 break
-            if os.path.isfile(f"./static/{path}{item}"):
+            if os.path.isfile(f"{root_static}{path}{item}"):
                 copy_this_to(item, path)    
-            if os.path.isfile(f"./static/{path}{item}") == False:
+            if os.path.isfile(f"{root_static}{path}{item}") == False:
                 path += f"{item}/"
-                os.mkdir(f"./public/{path}")
-                print(f"created dir ./public/{path}")
-                print(f"moving into dir ./static/{path}")
-                copy_files(path)
+                os.mkdir(f"{root_public}{path}")
+                print(f"created dir {root_public}{path}")
+                print(f"moving into dir {root_static}{path}")
+                copy_files(path, root_static, root_public)
                 
 def copy_this_to(file, path):
     shutil.copy(f"./static/{path}{file}", f"./public/{path}")
